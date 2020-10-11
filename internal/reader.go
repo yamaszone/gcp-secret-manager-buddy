@@ -7,18 +7,39 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	//"time"
+	"strconv"
+	"time"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/kelseyhightower/envconfig"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 )
+
+type Config struct {
+	Timeout string `envconfig:"GSM_TIMEOUT" default:"10"`
+}
 
 type GsmResponse struct {
 	secretKey   string
 	secretValue string
 	err         error
 }
+
+var (
+	EnvConfig = InitConfig()
+)
+
+func InitConfig() Config {
+	var cfg Config
+	err := envconfig.Process("", &cfg)
+	if err != nil {
+		log.Fatalf("Error: failed to load config: %v", err)
+	}
+	return cfg
+}
+
 type SecretIDList map[string]string
+
 type SecretsPayload map[string]interface{}
 
 func GetSecrets(filename string, projectId string, version string) error {
@@ -61,7 +82,8 @@ func GetSecrets(filename string, projectId string, version string) error {
 
 func GetSecret(name string, projectId string, version string) (string, error) {
 
-	ctx := context.Background()
+	timeout, _ := strconv.Atoi(EnvConfig.Timeout)
+	ctx, _ := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		log.Printf("Error: failed to create secretmanager client: %v", err)
