@@ -16,7 +16,8 @@ import (
 )
 
 type Config struct {
-	Timeout string `envconfig:"GSM_TIMEOUT" default:"10"`
+	GsmIsStub string `envconfig:"GSM_IS_STUB" default:"no"`
+	Timeout   string `envconfig:"GSM_TIMEOUT" default:"10"`
 }
 
 type GsmResponse struct {
@@ -24,6 +25,10 @@ type GsmResponse struct {
 	secretValue string
 	err         error
 }
+
+type SecretIDList map[string]string
+
+type SecretsPayload map[string]interface{}
 
 var (
 	EnvConfig = InitConfig()
@@ -38,16 +43,35 @@ func InitConfig() Config {
 	return cfg
 }
 
-type SecretIDList map[string]string
+func printPayload(sp SecretsPayload) error {
+	secretsPayload, err := json.Marshal(sp)
+	if err != nil {
+		return err
+	}
 
-type SecretsPayload map[string]interface{}
+	jsonStr := string(secretsPayload)
+	fmt.Println(jsonStr)
+	return nil
+}
 
 func GetSecrets(filename string, projectId string, version string) error {
 
 	sp := SecretsPayload{}
+
 	secretIDList, err := GetSecretIDList(filename)
 	if err != nil {
 		return err
+	}
+
+	if EnvConfig.GsmIsStub == "yes" {
+		for k, v := range secretIDList {
+			sp[k] = v
+		}
+		err := printPayload(sp)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	ch := make(chan *GsmResponse, len(secretIDList))
@@ -65,13 +89,10 @@ func GetSecrets(filename string, projectId string, version string) error {
 			//fmt.Printf("Secret Key = %s was fetched, Secret Value = %s\n", r.secretKey, r.secretValue)
 			sp[r.secretKey] = r.secretValue
 			if len(sp) == len(secretIDList) {
-				secretsPayload, err := json.Marshal(sp)
+				err := printPayload(sp)
 				if err != nil {
 					return err
 				}
-
-				jsonStr := string(secretsPayload)
-				fmt.Println(jsonStr)
 				return nil
 			}
 		}
