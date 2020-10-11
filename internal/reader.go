@@ -3,39 +3,40 @@ package reader
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
-	"strings"
+	"os"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
-
-	viper "github.com/spf13/viper"
 )
 
 type SecretIDList map[string]string
 type SecretsPayload map[string]interface{}
 
-func GetSecrets(path string, filename string, group string, projectId string, version string) {
+func GetSecrets(filename string, projectId string, version string) error {
 
 	sp := SecretsPayload{}
-	secretIDList, _ := GetSecretIDList(path, filename, group)
+	secretIDList, err := GetSecretIDList(filename)
+	if err != nil {
+		return err
+	}
 
-	// Iterate serially to avoid exceeding secret manager rate limits
 	for k, v := range secretIDList {
 		res, _ := GetSecret(v, projectId, version)
-		sp[strings.ToUpper(k)] = res
+		sp[k] = res
 	}
 
 	secretsPayload, err := json.Marshal(sp)
 	if err != nil {
-			fmt.Println(err.Error())
-			return
+		fmt.Println(err.Error())
+		return err
 	}
 
 	jsonStr := string(secretsPayload)
 	fmt.Println(jsonStr)
+	return nil
 }
 
 func GetSecret(name string, projectId string, version string) (string, error) {
@@ -44,7 +45,7 @@ func GetSecret(name string, projectId string, version string) (string, error) {
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		log.Printf("Error: failed to create secretmanager client: %v", err)
-		return "", nil
+		return "", err
 	}
 	//fmt.Println(name)
 
@@ -65,18 +66,27 @@ func GetSecret(name string, projectId string, version string) (string, error) {
 	return string(p.Data), nil
 }
 
-func GetSecretIDList(path string, filename string, group string) (SecretIDList, error) {
+func GetSecretIDList(filename string) (SecretIDList, error) {
+	var response SecretIDList
 
-	var response = SecretIDList{}
-
-	viper.SetConfigName(filename)
-	viper.AddConfigPath(path)
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
+	jsonFile, err := os.Open(filename)
 	if err != nil {
-		return response, errors.New("Failed to read input JSON file content.")
+		log.Printf("Error: failed to open %s. %s", filename, err)
+		return response, err
 	}
-	response = viper.GetStringMapString(group)
+	defer jsonFile.Close()
+
+	jsonBytes, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		log.Printf("Error: failed to read %s. %s", filename, err)
+		return response, err
+	}
+
+	err = json.Unmarshal(jsonBytes, &response)
+	if err != nil {
+		log.Printf("Error: failed to parse JSON file %s. %s", filename, err)
+		return response, err
+	}
 	//fmt.Println(response)
 
 	return response, nil

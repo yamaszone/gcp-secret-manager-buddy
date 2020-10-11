@@ -1,0 +1,15 @@
+
+# kubetpl:syntax:$
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: $NAME-pod
+spec:
+  containers:
+  - name: $NAME-container
+    image: $IMAGE
+    env:
+    - name: ENV_KEY
+      value: $ENV_KEY
+
