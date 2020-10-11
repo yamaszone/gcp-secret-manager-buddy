@@ -7,11 +7,17 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	//"time"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 )
 
+type GsmResponse struct {
+	secretKey   string
+	secretValue string
+	err         error
+}
 type SecretIDList map[string]string
 type SecretsPayload map[string]interface{}
 
@@ -23,19 +29,33 @@ func GetSecrets(filename string, projectId string, version string) error {
 		return err
 	}
 
+	ch := make(chan *GsmResponse, len(secretIDList))
+
 	for k, v := range secretIDList {
-		res, _ := GetSecret(v, projectId, version)
-		sp[k] = res
+		go func(k string, v string) {
+			res, err := GetSecret(v, projectId, version)
+			ch <- &GsmResponse{k, res, err}
+		}(k, v)
 	}
 
-	secretsPayload, err := json.Marshal(sp)
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
+	for {
+		select {
+		case r := <-ch:
+			//fmt.Printf("Secret Key = %s was fetched, Secret Value = %s\n", r.secretKey, r.secretValue)
+			sp[r.secretKey] = r.secretValue
+			if len(sp) == len(secretIDList) {
+				secretsPayload, err := json.Marshal(sp)
+				if err != nil {
+					return err
+				}
+
+				jsonStr := string(secretsPayload)
+				fmt.Println(jsonStr)
+				return nil
+			}
+		}
 	}
 
-	jsonStr := string(secretsPayload)
-	fmt.Println(jsonStr)
 	return nil
 }
 

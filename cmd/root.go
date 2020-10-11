@@ -36,10 +36,10 @@ var project string
 var version string
 
 var rootCmd = &cobra.Command{
-	Use:   "gsm-buddy",
+	Use:     "gsm-buddy",
 	Aliases: []string{"gcp-secret-manager-buddy", "gsmb"},
-	Short: "Fetch secrets from GCP Secret Manager",
-	Long: ``,
+	Short:   "Fetch secrets from GCP Secret Manager",
+	Long:    ``,
 }
 
 func Execute() {
