@@ -5,26 +5,6 @@
 - Fetch secrets for an app prior to it's deployment
 - Run `gsm-buddy` as a sidecar of an application to feed secrets periodically
 
-## Input
-`cat input.json`
-```
-{
-	"KEY1":"secret-name1",
-	"KEY2":"secret-name2"
-}
-```
-
-## Execute
-`gsm-buddy get -i input.json -p my-gcp-project`
-
-## Output
-```
-{
-	"KEY1":"secret-value1",
-	"KEY2":"secret-value2"
-}
-```
-
 ## Installation
 ### Linux/macOS
 ```
@@ -45,4 +25,31 @@ gcloud projects add-iam-policy-binding "$project_id" --member "serviceAccount:${
 gcloud projects add-iam-policy-binding "$project_id" --member "serviceAccount:${iam_account}" --role "roles/secretmanager.secretAccessor"
 gcloud iam service-accounts keys create --iam-account "$iam_account" ~/${sa_name}-key.json
 export GOOGLE_APPLICATION_CREDENTIALS=~/${sa_name}-key.json
+```
+
+## Usage
+
+### Prerequisites
+- [Install `gsm-buddy`](#installation)
+- [GCP Service Account Setup](#gcp-service-account-setup)
+
+### Input
+`cat input.json`
+
+```
+{
+	"KEY1":"secret-name1",
+	"KEY2":"secret-name2"
+}
+```
+
+### Execute
+`gsm-buddy get -i input.json -p my-gcp-project`
+
+### Output
+```
+{
+	"KEY1":"secret-value1",
+	"KEY2":"secret-value2"
+}
 ```
