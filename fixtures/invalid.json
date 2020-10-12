@@ -1,0 +1,4 @@
+{
+	"API_KEY": "dev-api-key-secret-id"
+	"DB_PASS": "dev-db-pass-secret-id"
+}
