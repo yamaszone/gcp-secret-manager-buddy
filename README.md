@@ -53,3 +53,14 @@ export GOOGLE_APPLICATION_CREDENTIALS=~/${sa_name}-key.json
 	"KEY2":"secret-value2"
 }
 ```
+
+## Benchmark
+### Setup
+- __gsm-buddy__: `gsm-buddy get -i secret-ids-sample.json -p tntprod`
+- __gcloud__: `for i in $(gcloud secrets list --format="value(name)" --filter=""); do echo $i=$(gcloud secrets versions access latest --secret $i); done`
+
+### Result
+|Tool|Time|Operation|
+| :---: | :---: | :---: |
+|__gsm-buddy__| `(0.835s+1.105s+0.866s)/3`=__0.935s__ | Average of 3 reads | 
+|__gcloud__| `(4.887s+5.123s+4.853s)/3`=__4.954s__ | Average of 3 reads | 
