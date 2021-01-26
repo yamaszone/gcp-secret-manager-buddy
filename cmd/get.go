@@ -22,8 +22,10 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	reader "github.com/yamaszone/gcp-secret-manager-buddy/internal"
+	"os"
 )
 
 var getCmd = &cobra.Command{
@@ -58,6 +60,12 @@ func init() {
 }
 
 func getSecrets(cmd *cobra.Command, args []string) error {
+	_, present := os.LookupEnv("GOOGLE_APPLICATION_CREDENTIALS")
+	if !present {
+		fmt.Println("Error: GOOGLE_APPLICATION_CREDENTIALS not set in the environment.")
+		os.Exit(1)
+	}
+
 	inputFile, err := cmd.Flags().GetString("input")
 	if err != nil {
 		return err
