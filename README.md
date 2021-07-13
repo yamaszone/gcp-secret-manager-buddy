@@ -8,7 +8,7 @@
 ## Installation
 ### Linux/macOS
 ```
-curl -sSL https://github.com/yamaszone/gcp-secret-manager-buddy/releases/download/v0.1.1/gcp-secret-manager-buddy-v0.1.1-$(
+curl -sSL https://github.com/yamaszone/gcp-secret-manager-buddy/releases/download/v0.1.2/gcp-secret-manager-buddy-v0.1.2-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64 -o gsm-buddy && chmod a+x gsm-buddy && sudo mv gsm-buddy /usr/local/bin/
 ```
